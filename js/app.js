@@ -74,7 +74,7 @@
     $('#themeButton').addEventListener('click', () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
 
     const share = new URL('https://t.me/share/url');
-    share.searchParams.set('url', location.href.startsWith('http') ? location.href : 'https://github.com/lianmiguel666-stack/virgilio.ia');
+    share.searchParams.set('url', location.href.startsWith('http') ? location.href : 'https://github.com/lianmiguel666-stack/Virgilio.IA');
     share.searchParams.set('text', 'Estou me organizando com o virgilio.ia ✦');
     $('#telegramLink').href = share.toString();
 

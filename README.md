@@ -2,7 +2,7 @@
 
 Assistente pessoal que roda direto no navegador, feito em **HTML, CSS e JavaScript puro** (sem servidor, sem instalação).
 
-**Abrir o site:** https://lianmiguel666-stack.github.io/virgilio.ia/
+**Abrir o site:** https://lianmiguel666-stack.github.io/Virgilio.IA/
 
 ## O que ele faz
 
