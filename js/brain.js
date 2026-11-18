@@ -78,15 +78,16 @@
         const h = new Date().getHours();
         const g = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
         const open = V.tasksApi.open().length;
-        return p(`${g}, ${escapeHtml(settings.name)}! ${open ? `Você tem <b>${open}</b> tarefa${open > 1 ? 's' : ''} aberta${open > 1 ? 's' : ''}. ` : ''}Como posso ajudar?`);
+        V.bard?.set('cheer', 1500);
+        return p(`${pick(['Saudações', g, 'Salve'])}, ${escapeHtml(settings.name)}! ${open ? `Você tem <b>${open}</b> tarefa${open > 1 ? 's' : ''} aberta${open > 1 ? 's' : ''}. ` : ''}${pick(['Que jornada vamos começar hoje?', 'Como posso ajudar?', 'Meu alaúde e eu estamos às ordens.'])}`);
       }
     },
     { name: 'tudo-bem', test: (n) => /^(e ai,? )?(tudo bem|td bem|tudo certo|como (voce )?(esta|vai)( voce)?|beleza)\s*\??$/.test(n), run: () => p(pick(['Tudo ótimo por aqui, pronto para ajudar! E você?', 'Funcionando a todo vapor! O que vamos fazer hoje?'])) },
-    { name: 'obrigado', test: (n) => /(obrigad|valeu|vlw|brigad|agradeco)/.test(n), run: () => p(pick(['Por nada! ✦', 'Sempre que precisar!', 'Disponha. Bora pro próximo passo?'])) },
+    { name: 'obrigado', test: (n) => /^(muito |mto )?(obrigad|valeu|vlw|brigad|agradeco)/.test(n), run: () => p(pick(['Por nada! ✦', 'Sempre que precisar!', 'Disponha. Bora pro próximo passo?'])) },
     {
       name: 'identidade',
       test: (n) => /(quem e voce|qual (e )?(o )?seu nome|como (voce )?se chama|o que voce e|voce e uma ia)/.test(n),
-      run: () => p('Eu sou o <b>virgilio.ia</b>, seu copiloto. Organizo tarefas, crio scripts, desenho imagens, faço contas, pesquiso na Wikipedia, vejo o clima e lembro do que você me contar. Tudo no seu navegador.')
+      run: () => { V.bard?.set('cheer', 1800); return p('Eu sou <b>Virgílio</b>, o bardo do <b>virgilio.ia</b>! 🪶 Troquei as tavernas pelo seu navegador: organizo tarefas, crio scripts, desenho imagens, faço contas, pesquiso, vejo o clima, conto histórias e toco alaúde. Clique em mim para ouvir uma canção.'); }
     },
     {
       name: 'ajuda',
@@ -104,6 +105,7 @@
         '🧠 <b>Memória:</b> "meu nome é ...", "lembre que minha cor favorita é azul", "o que você sabe sobre mim"',
         '✍️ <b>Textos:</b> "resuma: (texto)", "conte as palavras: (texto)", "maiúsculas: (texto)"',
         '🎲 <b>Diversão:</b> "conte uma piada", "frase motivacional", "curiosidade", "jogue um dado", "cara ou coroa", "sorteie entre A, B e C", "gere uma senha"',
+        '🧩 <b>Extensões:</b> "toque uma música", "conte uma história sobre dragões", "faça um poema sobre o mar", "nota: ...", "traduza para inglês: bom dia", "100 dólares em reais". Ligue e desligue no botão 🧩',
         '⚙️ <b>Ajustes:</b> "modo escuro", "ative a voz" (eu leio as respostas em voz alta) e o botão 🎤 para falar comigo'
       ])
     },
@@ -617,7 +619,12 @@
   async function think(raw) {
     const text = raw.trim();
     const n = normalize(text);
+    let offHint = null;
     for (const skill of SKILLS) {
+      if (skill.ext && !V.extensions?.isOn(skill.ext)) { // extensão desligada
+        try { if (!offHint && skill.test(n, text)) offHint = skill.ext; } catch { /* ignore */ }
+        continue;
+      }
       let ok = false;
       try { ok = skill.test(n, text); } catch { ok = false; }
       if (!ok) continue;
@@ -625,6 +632,10 @@
       if (out) { ctx.lastSkill = skill.name; return out; }
     }
     ctx.lastSkill = 'fallback';
+    if (offHint) {
+      const ext = V.extensions.list.find((e) => e.id === offHint);
+      return p(`Isso faz parte da extensão ${ext.icon} <b>${ext.name}</b>, que está desligada. Diga "ligar extensão ${normalize(ext.name).split(' ')[0]}" ou use o botão 🧩.`);
+    }
     return fallback(n, text);
   }
 

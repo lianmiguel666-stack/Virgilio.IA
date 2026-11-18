@@ -18,10 +18,12 @@
 
     // Mostra a imagem personalizada só se ela existir.
     const showImage = () => { img.hidden = false; mark.hidden = true; };
+    // o bardo toca enquanto carrega
+    if (V.bard) { mark.hidden = true; V.bard.mount($('#loaderBard'), { size: 120 }); V.bard.set('play'); }
     if (img.complete && img.naturalWidth > 0) showImage();
     else img.addEventListener('load', showImage, { once: true });
 
-    const steps = ['Preparando seu espaço...', 'Carregando suas tarefas...', 'Acordando o virgilio.ia...', 'Tudo pronto!'];
+    const steps = ['Afinando o alaúde...', 'Carregando suas tarefas...', 'Acordando o bardo Virgílio...', 'Tudo pronto!'];
     let i = 0;
     bar.style.width = (100 / steps.length) + '%';
     const tick = setInterval(() => {
@@ -40,6 +42,7 @@
       text.textContent = steps[steps.length - 1];
       setTimeout(() => {
         loader.classList.add('done');
+        V.bard?.set('idle');
         document.body.classList.remove('is-loading');
         setTimeout(() => loader.remove(), 600);
       }, 250);
@@ -65,7 +68,7 @@
     document.documentElement.dataset.theme = dark ? 'dark' : 'light';
     $('#themeButton').textContent = dark ? '☀️' : '🌙';
     $('#themeButton').title = dark ? 'Modo claro' : 'Modo escuro';
-    document.querySelector('meta[name="theme-color"]').content = dark ? '#10140f' : '#f5f7f2';
+    document.querySelector('meta[name="theme-color"]').content = dark ? '#0b1220' : '#f2f6fc';
   }
 
   function initHeader() {
@@ -478,6 +481,7 @@
      Chat
      ========================================================= */
   let chatHistory = store.get(STORAGE.chat, []);
+  const bardFace = V.bard ? V.bard.avatarDataUrl() : '';
   let sentHistory = [];
   let histIndex = -1;
   let busy = false;
@@ -487,7 +491,7 @@
     const el = document.createElement('div');
     el.className = 'message ' + (role === 'ai' ? 'ai-message' : 'user-message');
     const time = timeNow();
-    el.innerHTML = (role === 'ai' ? '<div class="message-avatar">✦</div>' : '') + `<div class="bubble">${html}<time>${time}</time></div>`;
+    el.innerHTML = (role === 'ai' ? `<div class="message-avatar"><img src="${bardFace}" alt=""></div>` : '') + `<div class="bubble">${html}<time>${time}</time></div>`;
     win.appendChild(el);
     win.scrollTop = win.scrollHeight;
     $$('img', el).forEach((img) => img.addEventListener('load', () => { win.scrollTop = win.scrollHeight; }, { once: true }));
@@ -518,6 +522,7 @@
     addMessage('user', p(escapeHtml(text)));
     $('#chatInput').value = '';
     const typing = addMessage('ai', '<span class="typing"><span></span><span></span><span></span></span>', false);
+    V.bard?.set('think');
     const started = Date.now();
     let reply;
     try { reply = await V.think(text); } catch (err) { console.error(err); reply = p('Ops, algo deu errado aqui. Tenta de novo?'); }
@@ -525,6 +530,12 @@
     setTimeout(() => {
       typing.remove();
       addMessage('ai', reply);
+      // se a resposta não mudou o estado do bardo (ex.: música), ele "fala"
+      const st = $('#assistantBard')?.getAttribute('data-state');
+      if (st === 'think' || st === 'idle') {
+        const tmp = document.createElement('div'); tmp.innerHTML = reply;
+        V.bard?.set('talk', Math.min(4500, 600 + tmp.textContent.length * 25));
+      }
       speak(reply);
       busy = false;
       $('#chatInput').focus();
@@ -568,6 +579,7 @@
       if (action === 'download') downloadFile(btn.dataset.filename, code);
       if (action === 'preview') V.previewCode(btn.dataset.lang, code, btn.dataset.template);
       if (action === 'download-image') { const img = $('img', bubble); if (img) downloadDataUrl(btn.dataset.filename, img.src); }
+      if (action === 'say' && 'speechSynthesis' in window) { const u = new SpeechSynthesisUtterance(btn.dataset.text); u.lang = btn.dataset.lang; speechSynthesis.cancel(); speechSynthesis.speak(u); }
     });
 
     // Atalho: "/" foca o chat
@@ -577,9 +589,32 @@
   }
 
   /* =========================================================
+     Bardo do assistente
+     ========================================================= */
+  const BARD_LINES = [
+    'Uma canção para alegrar a jornada!', 'Lá lá lá... ops, desafinei. 🎶', 'Toda grande aventura começa com uma tarefa pequena.',
+    'Dizem que bardos não trabalham. Eu organizo seu dia!', 'Quer uma história? Diga "conte uma história".', 'Mais uma? Clique de novo!'
+  ];
+  function initBard() {
+    const wrap = $('#assistantBard');
+    if (!V.bard || !wrap) return;
+    V.bard.mount(wrap, { size: 54 });
+    wrap.addEventListener('click', () => {
+      if (V.extensions?.isOn('musica')) {
+        const title = V.bard.playSong();
+        toast('🎵 ' + title);
+      } else V.bard.set('cheer', 1500);
+      const bubble = $('#bardSpeech');
+      bubble.textContent = V.pick(BARD_LINES);
+      bubble.classList.add('show');
+      clearTimeout(initBard.t); initBard.t = setTimeout(() => bubble.classList.remove('show'), 3000);
+    });
+  }
+
+  /* =========================================================
      Inicialização
      ========================================================= */
-  V.app = { refreshHeader, setTheme, setVoice, startFocus, stopFocus, addReminder, reminders: () => [...reminders], clearReminders() { const k = reminders.length; reminders.forEach((r) => clearTimeout(reminderTimers[r.id])); reminders = []; saveReminders(); renderReminders(); return k; }, addMessage, sendToChat };
+  V.app = { notify, refreshHeader, setTheme, setVoice, startFocus, stopFocus, addReminder, reminders: () => [...reminders], clearReminders() { const k = reminders.length; reminders.forEach((r) => clearTimeout(reminderTimers[r.id])); reminders = []; saveReminders(); renderReminders(); return k; }, addMessage, sendToChat };
 
   function start() {
     initHeader();
@@ -588,6 +623,8 @@
     initReminders();
     initVoice();
     initChat();
+    initBard();
+    V.extensions?.init();
     $('#focusButton').addEventListener('click', () => (focus.timer ? stopFocus() : startFocus()));
     renderFocus();
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => settings.theme === 'auto' && setTheme('auto'));

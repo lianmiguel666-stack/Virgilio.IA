@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#f5f7f2">
+  <meta name="theme-color" content="#f2f6fc">
   <title>virgilio.ia | Assistente de tarefas</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,10 +23,11 @@
   <div class="loader" id="loader" role="status" aria-live="polite">
     <div class="loader-card">
       <img class="loader-image" id="loaderImage" src="assets/carregamento.png" alt="" hidden>
+      <div class="bard-wrap loader-bard" id="loaderBard"></div>
       <span class="brand-mark loader-mark" id="loaderMark"><span></span><span></span><span></span></span>
       <strong class="loader-title">virgilio<span class="accent">.ia</span></strong>
       <div class="loader-bar"><span id="loaderBar"></span></div>
-      <p class="loader-text" id="loaderText">Preparando seu espaço...</p>
+      <p class="loader-text" id="loaderText">Afinando o alaúde...</p>
     </div>
   </div>
 
@@ -38,7 +39,9 @@
       </a>
       <div class="topbar-actions">
         <div class="date-pill"><span class="pulse-dot"></span><span id="todayLabel">Hoje</span></div>
+        <div class="date-pill weather-pill" id="weatherPill" hidden></div>
         <a class="telegram-link" id="telegramLink" href="https://t.me/share/url" target="_blank" rel="noopener" aria-label="Compartilhar no Telegram">Telegram</a>
+        <button class="icon-button ext-button" id="extButton" type="button" title="Extensões">🧩<span class="ext-badge" id="extCount">0</span></button>
         <button class="icon-button" id="themeButton" type="button" title="Modo escuro">🌙</button>
         <button class="avatar" id="avatarButton" type="button" title="O que o virgilio.ia sabe sobre você">LI</button>
       </div>
@@ -57,8 +60,8 @@
       <section class="update-banner" aria-label="Atualização do virgilio.ia">
         <div>
           <span class="section-kicker">Atualização</span>
-          <strong>Versão 2.0</strong>
-          <p>Lembretes, voz, Wikipedia, clima, equações, memória e muitos scripts novos.</p>
+          <strong>Versão 3.0</strong>
+          <p>Conheça Virgílio, o bardo! Visual azul e extensões: músicas, histórias, notas, tradutor e moedas.</p>
         </div>
         <button class="ghost-button" id="updateButton" type="button">Ver novidades</button>
       </section>
@@ -182,6 +185,7 @@
       </section>
 
       <div class="content-grid">
+        <div class="tasks-column">
         <section class="tasks-panel panel">
           <div class="panel-heading">
             <div>
@@ -210,9 +214,18 @@
           </div>
         </section>
 
+        <section class="notes-panel panel" id="notesPanel" hidden aria-labelledby="notesTitle">
+          <div class="panel-heading">
+            <div><span class="section-kicker">Extensão</span><h2 id="notesTitle">Notas rápidas</h2></div>
+          </div>
+          <form class="notes-form" id="notesForm"><input id="notesInput" maxlength="300" placeholder="Escreva uma ideia e aperte Enter" autocomplete="off"><button class="small-button" type="submit">Salvar</button></form>
+          <div class="notes-list" id="notesList"></div>
+        </section>
+        </div>
+
         <aside class="assistant-panel panel">
           <div class="assistant-header">
-            <div class="assistant-title"><span class="ai-orb">✦</span><div><span class="section-kicker">Seu copiloto</span><h2>virgilio.ia</h2></div></div>
+            <div class="assistant-title"><button class="bard-wrap assistant-bard" id="assistantBard" type="button" title="Clique no Virgílio para ouvir uma canção" aria-label="Virgílio, o bardo"></button><span class="bard-speech" id="bardSpeech"></span><div><span class="section-kicker">Seu bardo copiloto</span><h2>Virgílio</h2></div></div>
             <div class="assistant-actions">
               <button class="icon-button small" id="voiceButton" type="button" title="Ler respostas em voz alta">🔈</button>
               <button class="icon-button small" id="exportChat" type="button" title="Baixar conversa">↓</button>
@@ -235,7 +248,7 @@
             <input id="chatInput" type="text" placeholder="Fale com o virgilio.ia..." autocomplete="off" aria-label="Mensagem">
             <button type="submit" title="Enviar">↑</button>
           </form>
-          <p class="disclaimer">Funciona no seu navegador. Só a pesquisa na Wikipedia e o clima usam a internet.</p>
+          <p class="disclaimer">Funciona no seu navegador. Só pesquisa, clima, tradutor e moedas usam a internet.</p>
         </aside>
       </div>
     </main>
@@ -255,14 +268,26 @@
     </form>
   </dialog>
 
+  <dialog id="extDialog" class="ext-dialog">
+    <form method="dialog">
+      <button class="close-button" value="cancel" aria-label="Fechar">×</button>
+      <span class="section-kicker">Deixe o Virgílio do seu jeito</span>
+      <h2>Extensões</h2>
+      <p class="ext-sub">Ligue só o que você usa. A escolha fica salva neste navegador.</p>
+      <div class="ext-grid" id="extGrid"></div>
+    </form>
+  </dialog>
+
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="js/core.js"></script>
+  <script src="js/mascot.js"></script>
   <script src="js/math.js"></script>
   <script src="js/templates-extra.js"></script>
   <script src="js/codegen.js"></script>
   <script src="js/image.js"></script>
   <script src="js/knowledge.js"></script>
   <script src="js/brain.js"></script>
+  <script src="js/extensions.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
