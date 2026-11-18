@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f7f2">
+  <title>virgilio.ia | Assistente de tarefas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <meta name="description" content="virgilio.ia: assistente pessoal que organiza tarefas, cria scripts, gera imagens, faz contas e pesquisa, direto no navegador.">
+  <link rel="stylesheet" href="css/style.css">
+  <script>
+    // aplica o tema salvo antes de desenhar a página (evita piscar)
+    try { const t = (JSON.parse(localStorage.getItem('virgilio.settings')) || {}).theme; if (t === 'dark' || ((!t || t === 'auto') && matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.dataset.theme = 'dark'; } catch (e) {}
+  </script>
+</head>
+<body class="is-loading">
+  <!-- Tela de carregamento. Para usar sua própria imagem, coloque o arquivo
+       na mesma pasta e troque o src abaixo (ex.: src="assets/carregamento.png").
+       Se a imagem não existir, o logo animado aparece no lugar. -->
+  <div class="loader" id="loader" role="status" aria-live="polite">
+    <div class="loader-card">
+      <img class="loader-image" id="loaderImage" src="assets/carregamento.png" alt="" hidden>
+      <span class="brand-mark loader-mark" id="loaderMark"><span></span><span></span><span></span></span>
+      <strong class="loader-title">virgilio<span class="accent">.ia</span></strong>
+      <div class="loader-bar"><span id="loaderBar"></span></div>
+      <p class="loader-text" id="loaderText">Preparando seu espaço...</p>
+    </div>
+  </div>
+
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#">
+        <span class="brand-mark"><span></span><span></span><span></span></span>
+        <span>virgilio<span class="accent">.ia</span></span>
+      </a>
+      <div class="topbar-actions">
+        <div class="date-pill"><span class="pulse-dot"></span><span id="todayLabel">Hoje</span></div>
+        <a class="telegram-link" id="telegramLink" href="https://t.me/share/url" target="_blank" rel="noopener" aria-label="Compartilhar no Telegram">Telegram</a>
+        <button class="icon-button" id="themeButton" type="button" title="Modo escuro">🌙</button>
+        <button class="avatar" id="avatarButton" type="button" title="O que o virgilio.ia sabe sobre você">LI</button>
+      </div>
+    </header>
+
+    <main class="dashboard">
+      <section class="welcome-row">
+        <div>
+          <p class="eyebrow" id="dateLabel">hoje</p>
+          <h1><span id="greeting">Olá</span>, <span id="userName">Lian</span><span class="accent">.</span></h1>
+          <p class="subtitle">Vamos transformar intenção em movimento.</p>
+        </div>
+        <button class="primary-button" id="openTaskButton" type="button"><span class="plus-icon">+</span> Nova tarefa</button>
+      </section>
+
+      <section class="update-banner" aria-label="Atualização do virgilio.ia">
+        <div>
+          <span class="section-kicker">Atualização</span>
+          <strong>Versão 2.0</strong>
+          <p>Lembretes, voz, Wikipedia, clima, equações, memória e muitos scripts novos.</p>
+        </div>
+        <button class="ghost-button" id="updateButton" type="button">Ver novidades</button>
+      </section>
+
+      <section class="stats-grid" aria-label="Resumo do dia">
+        <article class="stat-card stat-focus">
+          <div class="stat-top"><span class="stat-label">Foco de hoje</span><span class="stat-icon">◒</span></div>
+          <strong id="focusCount">0<span>/0</span></strong>
+          <div class="progress-line"><span id="focusProgress"></span></div>
+          <p id="focusCaption">Comece adicionando uma tarefa</p>
+        </article>
+        <article class="stat-card">
+          <div class="stat-top"><span class="stat-label">Em andamento</span><span class="stat-icon orange">↗</span></div>
+          <strong id="doingCount">0</strong>
+          <p>tarefas pedindo atenção</p>
+        </article>
+        <article class="stat-card">
+          <div class="stat-top"><span class="stat-label">Concluídas</span><span class="stat-icon green">✓</span></div>
+          <strong id="doneCount">0</strong>
+          <p>no total</p>
+        </article>
+      </section>
+
+      <section class="lab-panel panel" aria-labelledby="labTitle">
+        <div class="panel-heading lab-heading">
+          <div>
+            <span class="section-kicker">Ferramentas para destravar</span>
+            <h2 id="labTitle">Laboratório de trabalhos</h2>
+          </div>
+          <span class="lab-status"><i></i> cálculos locais</span>
+        </div>
+        <div class="lab-tabs" role="tablist" aria-label="Ferramentas do laboratório">
+          <button class="lab-tab active" data-lab="math" role="tab" aria-selected="true" type="button">Matemática</button>
+          <button class="lab-tab" data-lab="convert" role="tab" aria-selected="false" type="button">Conversor</button>
+          <button class="lab-tab" data-lab="code" role="tab" aria-selected="false" type="button">Desenvolvimento</button>
+          <button class="lab-tab" data-lab="image" role="tab" aria-selected="false" type="button">Imagens</button>
+        </div>
+        <div class="lab-body">
+          <div class="lab-view active" id="mathView" data-view="math" role="tabpanel">
+            <div class="tool-intro"><strong>Calculadora rápida</strong><span>Operações, potência, raiz, fatorial, equações (ex.: 2x + 3 = 11), porcentagem e regra de três.</span></div>
+            <div class="math-tools">
+              <form class="tool-box" id="calculatorForm">
+                <label for="calculatorInput">Expressão</label>
+                <div class="tool-input-row"><input id="calculatorInput" inputmode="decimal" placeholder="Ex.: (18 * 4) + 12 / 2 ou x² - 5x + 6 = 0" autocomplete="off"><button class="small-button" type="submit">Calcular</button></div>
+                <output id="calculatorResult" class="tool-result">Resultado aparecerá aqui</output>
+              </form>
+              <form class="tool-box" id="percentageForm">
+                <label for="percentageValue">Porcentagem</label>
+                <div class="compact-fields"><input id="percentageValue" type="number" step="any" placeholder="20"><span>% de</span><input id="percentageBase" type="number" step="any" placeholder="250"><button class="small-button" type="submit">=</button></div>
+                <output id="percentageResult" class="tool-result">Resultado aparecerá aqui</output>
+              </form>
+              <form class="tool-box" id="ruleForm">
+                <label for="ruleA">Regra de três</label>
+                <div class="compact-fields"><input id="ruleA" type="number" step="any" placeholder="A"><span>→</span><input id="ruleB" type="number" step="any" placeholder="B"><span>→</span><input id="ruleC" type="number" step="any" placeholder="C"><button class="small-button" type="submit">=</button></div>
+                <output id="ruleResult" class="tool-result">A : B = C : ?</output>
+              </form>
+            </div>
+          </div>
+          <div class="lab-view" id="convertView" data-view="convert" role="tabpanel">
+            <div class="tool-intro"><strong>Conversor de unidades</strong><span>Comprimento, massa, volume, tempo, dados, velocidade, área e temperatura.</span></div>
+            <form class="converter-box" id="converterForm">
+              <input id="convertValue" type="number" step="any" placeholder="Valor" required>
+              <select id="convertFrom" aria-label="Unidade de origem"></select>
+              <button class="icon-button" id="swapUnits" type="button" title="Inverter unidades">⇄</button>
+              <select id="convertTo" aria-label="Unidade de destino"></select>
+              <button class="small-button" type="submit">Converter</button>
+            </form>
+            <output id="converterResult" class="tool-result converter-result">O resultado aparecerá aqui</output>
+          </div>
+          <div class="lab-view" id="codeView" data-view="code" role="tabpanel">
+            <div class="tool-intro"><strong>Gerador de estrutura</strong><span>Escolha o tipo e o modelo. Ou peça no chat: "crie um jogo da velha em HTML".</span></div>
+            <div class="code-tools">
+              <select id="codeType" aria-label="Tipo de arquivo"><option value="html">HTML</option><option value="css">CSS</option><option value="js">JavaScript</option><option value="py">Python</option></select>
+              <select id="codeTemplate" aria-label="Modelo"></select>
+              <input id="codeName" placeholder="Nome do projeto" value="meu-projeto">
+              <button class="small-button" id="generateCode" type="button">Gerar estrutura</button>
+            </div>
+            <div class="code-actions" id="codeActions" hidden>
+              <button class="ghost-button small" id="copyCode" type="button">Copiar</button>
+              <button class="ghost-button small" id="downloadCode" type="button">Baixar arquivo</button>
+              <button class="ghost-button small" id="previewCode" type="button">Testar</button>
+            </div>
+            <pre class="code-output"><code id="codeOutput">// Escolha as opções acima e clique em "Gerar estrutura".</code></pre>
+          </div>
+          <div class="lab-view" id="imageView" data-view="image" role="tabpanel">
+            <div class="tool-intro"><strong>Gerador de imagens</strong><span>Transforme ideias em uma composição visual. A mesma descrição sempre gera a mesma arte.</span></div>
+            <div class="image-generator">
+              <div class="image-controls">
+                <input id="imagePrompt" type="text" placeholder="Descreva a imagem que você quer criar" value="Ideia criativa para revisão de projeto">
+                <select id="imageStyle" aria-label="Estilo da imagem">
+                  <option value="abstrato">Abstrato</option>
+                  <option value="paisagem">Paisagem</option>
+                  <option value="tecnologia">Tecnologia</option>
+                  <option value="minimalista">Minimalista</option>
+                </select>
+                <button class="small-button" id="generateImage" type="button">Gerar</button>
+              </div>
+              <div class="image-preview-wrap">
+                <img id="imagePreview" alt="Preview da imagem gerada" hidden>
+                <p id="imageCaption">Uma nova visualização aparecerá aqui.</p>
+                <button class="ghost-button small" id="downloadImage" type="button" hidden>Baixar PNG</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="apps-panel panel" aria-labelledby="appsTitle">
+        <div class="panel-heading apps-heading">
+          <div><span class="section-kicker">Acesso rápido</span><h2 id="appsTitle">Aplicativos para trabalhar</h2></div>
+          <span class="apps-note">abre em uma nova aba</span>
+        </div>
+        <div class="app-links">
+          <a class="app-link" href="https://drive.google.com" target="_blank" rel="noopener"><span class="app-mark drive">D</span><span><strong>Drive</strong><small>Arquivos</small></span><b>↗</b></a>
+          <a class="app-link" href="https://docs.google.com" target="_blank" rel="noopener"><span class="app-mark docs">D</span><span><strong>Docs</strong><small>Textos</small></span><b>↗</b></a>
+          <a class="app-link" href="https://sheets.google.com" target="_blank" rel="noopener"><span class="app-mark sheets">S</span><span><strong>Sheets</strong><small>Planilhas</small></span><b>↗</b></a>
+          <a class="app-link" href="https://github.com" target="_blank" rel="noopener"><span class="app-mark github">⌘</span><span><strong>GitHub</strong><small>Código</small></span><b>↗</b></a>
+          <a class="app-link" href="https://www.canva.com" target="_blank" rel="noopener"><span class="app-mark canva">C</span><span><strong>Canva</strong><small>Design</small></span><b>↗</b></a>
+          <a class="app-link" href="https://mail.google.com" target="_blank" rel="noopener"><span class="app-mark mail">@</span><span><strong>E-mail</strong><small>Mensagens</small></span><b>↗</b></a>
+        </div>
+      </section>
+
+      <div class="content-grid">
+        <section class="tasks-panel panel">
+          <div class="panel-heading">
+            <div>
+              <span class="section-kicker">Seu espaço</span>
+              <h2>Tarefas</h2>
+            </div>
+            <div class="task-tools">
+              <div class="filter-tabs" role="tablist" aria-label="Filtrar tarefas">
+                <button class="filter active" data-filter="all" type="button">Todas</button>
+                <button class="filter" data-filter="today" type="button">Hoje</button>
+                <button class="filter" data-filter="open" type="button">Abertas</button>
+              </div>
+              <input class="task-search" id="taskSearch" type="search" placeholder="Buscar" aria-label="Buscar tarefas">
+              <select class="sort-select" id="sortTasks" aria-label="Ordenar tarefas"><option value="priority">Prioridade</option><option value="recent">Mais recentes</option><option value="duration">Duração</option></select>
+              <button class="icon-button" id="exportButton" type="button" title="Exportar tarefas">↓</button>
+              <button class="icon-button" id="clearDoneButton" type="button" title="Limpar tarefas concluídas">⌫</button>
+            </div>
+          </div>
+          <div class="focus-strip"><span><b>Modo foco</b> reserve um bloco para avançar sem distrações.</span><button id="focusButton" type="button"><span id="focusLabel">Iniciar</span> <strong id="focusTimer">25:00</strong></button></div>
+          <div id="taskList" class="task-list"></div>
+          <div id="emptyState" class="empty-state" hidden>
+            <div class="empty-icon">✦</div>
+            <h3>Nenhuma tarefa por aqui</h3>
+            <p>Adicione algo pequeno. Clareza costuma aparecer depois do primeiro passo.</p>
+            <button class="text-button" id="emptyAddButton" type="button">Criar primeira tarefa <span>→</span></button>
+          </div>
+        </section>
+
+        <aside class="assistant-panel panel">
+          <div class="assistant-header">
+            <div class="assistant-title"><span class="ai-orb">✦</span><div><span class="section-kicker">Seu copiloto</span><h2>virgilio.ia</h2></div></div>
+            <div class="assistant-actions">
+              <button class="icon-button small" id="voiceButton" type="button" title="Ler respostas em voz alta">🔈</button>
+              <button class="icon-button small" id="exportChat" type="button" title="Baixar conversa">↓</button>
+              <button class="icon-button small" id="clearChat" type="button" title="Limpar conversa">⟲</button>
+              <span class="online-status"><i></i> online</span>
+            </div>
+          </div>
+          <div class="chat-window" id="chatWindow" aria-live="polite"></div>
+          <div class="reminder-list" id="reminderList" hidden></div>
+          <div class="suggestion-row">
+            <button class="suggestion" type="button" data-prompt="O que devo fazer primeiro?">O que priorizar?</button>
+            <button class="suggestion" type="button" data-prompt="Organize minhas tarefas">Organizar meu dia</button>
+            <button class="suggestion" type="button" data-prompt="Crie um jogo da velha em HTML">Criar um script</button>
+            <button class="suggestion" type="button" data-prompt="me lembre em 10 minutos de beber água">Lembrete</button>
+            <button class="suggestion" type="button" data-prompt="conte uma curiosidade">Curiosidade</button>
+            <button class="suggestion" type="button" data-prompt="ajuda">O que você faz?</button>
+          </div>
+          <form class="chat-form" id="chatForm">
+            <button class="mic-button" id="micButton" type="button" title="Falar com o virgilio.ia">🎤</button>
+            <input id="chatInput" type="text" placeholder="Fale com o virgilio.ia..." autocomplete="off" aria-label="Mensagem">
+            <button type="submit" title="Enviar">↑</button>
+          </form>
+          <p class="disclaimer">Funciona no seu navegador. Só a pesquisa na Wikipedia e o clima usam a internet.</p>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <dialog id="taskDialog" class="task-dialog">
+    <form method="dialog" id="taskForm">
+      <button class="close-button" value="cancel" formnovalidate aria-label="Fechar">×</button>
+      <span class="section-kicker">Um passo de cada vez</span>
+      <h2>Adicionar tarefa</h2>
+      <label for="taskTitle">O que precisa ser feito?</label>
+      <input id="taskTitle" required maxlength="90" placeholder="Ex.: revisar apresentação do projeto">
+      <div class="form-row"><div><label for="taskCategory">Área</label><select id="taskCategory"><option>Trabalho</option><option>Pessoal</option><option>Estudo</option><option>Casa</option></select></div><div><label for="taskPriority">Prioridade</label><select id="taskPriority"><option value="high">Alta</option><option value="medium" selected>Média</option><option value="low">Baixa</option></select></div></div>
+      <label for="taskDuration">Tempo estimado</label><select id="taskDuration"><option value="15">15 minutos</option><option value="25" selected>25 minutos</option><option value="45">45 minutos</option><option value="60">1 hora</option></select>
+      <label class="date-check"><input type="checkbox" id="taskToday" checked><span>Fazer hoje</span></label>
+      <button class="primary-button full" type="submit" value="save">Adicionar tarefa <span>→</span></button>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="js/core.js"></script>
+  <script src="js/math.js"></script>
+  <script src="js/templates-extra.js"></script>
+  <script src="js/codegen.js"></script>
+  <script src="js/image.js"></script>
+  <script src="js/knowledge.js"></script>
+  <script src="js/brain.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
