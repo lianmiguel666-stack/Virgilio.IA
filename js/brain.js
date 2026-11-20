@@ -17,11 +17,11 @@
   const saveFacts = () => store.set(STORAGE.memory, facts);
 
   /* ---------- Helpers ---------- */
-  const codeBlock = (code) => `<pre>${escapeHtml(code.content)}</pre>
+  const codeBlock = (code) => `<div class="code-head"><span class="lang-badge lang-${code.lang}">${V.LANG_NAME[code.lang]}</span><span>${code.filename}</span></div><pre class="hl" data-lang="${code.lang}">${escapeHtml(code.content)}</pre>
     <div class="bubble-actions">
       <button type="button" data-chat-action="copy">Copiar</button>
       <button type="button" data-chat-action="download" data-filename="${code.filename}">Baixar ${code.filename}</button>
-      ${code.lang !== 'py' ? `<button type="button" data-chat-action="preview" data-lang="${code.lang}" data-template="${code.template}">Testar</button>` : ''}
+      ${['html', 'css', 'js'].includes(code.lang) && !code.node ? `<button type="button" data-chat-action="preview" data-lang="${code.lang}" data-template="${code.template}">Testar</button>` : ''}
     </div>`;
 
   const after = (text, re) => { const m = text.match(re); return m ? m[m.length - 1].trim().replace(/[?.!]+$/, '') : ''; };
@@ -29,15 +29,21 @@
   function makeCode(lang, template, name) {
     const code = V.generateCode(lang, template, name);
     ctx.lastCode = code;
+    const tpl = V.TEMPLATES[template] || {};
     let intro = `Pronto! Aqui está: <b>${V.TEMPLATE_NAME[template]}</b> em <b>${V.LANG_NAME[code.lang]}</b>.`;
     if (lang === 'py' && code.lang !== 'py') intro += ' Esse modelo só existe para web, então fiz em HTML.';
+    if ((lang === 'html' || lang === 'css') && tpl.program) intro += ' Esse é um programa de terminal, então fiz em JavaScript (Node).';
     if (template === 'base') intro += ' Não reconheci um modelo específico, então fiz a estrutura base.';
-    if (code.lang === 'js' || code.lang === 'css') intro += ` Para a página completa, diga "agora em HTML".`;
-    if (code.lang === 'py') intro += ' Salve e rode com <code>python ' + code.filename + '</code>.';
-    return p(intro) + codeBlock(code) + p('<small>Outros modelos: ' + Object.values(V.TEMPLATE_NAME).slice(1).join(', ') + '.</small>');
+    if ((code.lang === 'js' && !code.node) || code.lang === 'css') intro += ` Para a página completa, diga "agora em HTML".`;
+    let extra = '';
+    if (code.explain) extra += p('<b>Como funciona:</b>') + list(code.explain.map(escapeHtml));
+    if (code.run) extra += p(`<b>Como rodar:</b> salve o arquivo e use <code>${escapeHtml(code.run)}</code>`);
+    const others = tpl.program ? 'Também faço em ' + ['js', 'py', 'php'].filter((l) => l !== code.lang).map((l) => V.LANG_NAME[l]).join(' e ') + ': é só pedir "agora em ..."'
+      : 'Outros modelos: ' + Object.values(V.TEMPLATE_NAME).slice(1).join(', ') + '.';
+    return p(intro) + codeBlock(code) + extra + p('<small>' + others + '</small>');
   }
 
-  const detectLang = (n) => /python|\bpy\b/.test(n) ? 'py' : /\bcss\b|estilo|estiliz/.test(n) ? 'css' : /html|pagina|site|tela/.test(n) ? 'html' : /javascript|\bjs\b|script/.test(n) ? 'js' : null;
+  const detectLang = (n) => /\bphp\b/.test(n) ? 'php' : /python|phyton|pyton|\bpy\b/.test(n) ? 'py' : /node|nodejs|terminal|console/.test(n) ? 'js' : /\bcss\b|estilo|estiliz/.test(n) ? 'css' : /html|pagina|site|tela/.test(n) ? 'html' : /javascript|\bjs\b|script/.test(n) ? 'js' : null;
 
   function parseDelay(n) {
     // "em 10 minutos", "daqui a 2 horas", "daqui 30 segundos", "em meia hora"
@@ -236,15 +242,15 @@
     /* ---------- código ---------- */
     {
       name: 'codigo-continuacao',
-      test: (n) => !!ctx.lastCode && /^(e |agora |faz |faca |manda |mostra )?(em |no |para |pra )?(o )?(python|html|css|javascript|js)( tambem| agora)?\??$/.test(n),
+      test: (n) => !!ctx.lastCode && /^(e |agora |faz |faca |manda |mostra )?(em |no |para |pra )?(o )?(python|phyton|php|html|css|javascript|js|node)( tambem| agora)?\??$/.test(n),
       run: (n) => makeCode(detectLang(n), ctx.lastCode.template, V.TEMPLATE_NAME[ctx.lastCode.template])
     },
     {
       name: 'codigo',
       test: (n) => {
         const verb = /\b(cri|ger|fac|faz|escrev|mont|me (de|da|manda)|quero|preciso de|programe|desenvolv|construa|codifique)/.test(n);
-        const noun = /(script|codigo|\bprograma\b|pagina|\bsite\b|html|\bcss\b|javascript|\bjs\b|python|\bpy\b|funcao|\bapp\b|aplicativo|jogo da velha|landing)/.test(n);
-        const strongTemplate = /(cronometro|quiz|jogo da velha|landing|calculadora|relogio digital)/.test(n);
+        const noun = /(script|codigo|\bprogramas?\b|pagina|\bsite\b|html|\bcss\b|javascript|\bjs\b|python|phyton|\bpy\b|\bphp\b|funcao|\bapp\b|aplicativo|jogo da velha|landing|servidor|backend)/.test(n);
+        const strongTemplate = /(cronometro|quiz|jogo da velha|landing|calculadora|relogio digital|jogo de adivinha|agenda de contatos|media de notas|conversor de temperatura|gerador de senhas)/.test(n);
         return (noun && (verb || /^(um |uma |o |a )?(script|codigo|programa|pagina|site|html|css|javascript|js|python)\b/.test(n)))
           || (verb && strongTemplate) || (!!detectLang(n) && V.detectTemplate(n) !== 'base');
       },

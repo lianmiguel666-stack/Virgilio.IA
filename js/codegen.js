@@ -8,8 +8,8 @@
   const { normalize, escapeHtml, toast } = V;
 
   const slug = (s) => normalize(s).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'meu-projeto';
-  const EXT = { html: 'html', css: 'css', js: 'js', py: 'py' };
-  const LANG_NAME = { html: 'HTML', css: 'CSS', js: 'JavaScript', py: 'Python' };
+  const EXT = { html: 'html', css: 'css', js: 'js', py: 'py', php: 'php' };
+  const LANG_NAME = { html: 'HTML', css: 'CSS', js: 'JavaScript', py: 'Python', php: 'PHP' };
   const TEMPLATE_NAME = {
     base: 'estrutura base', contador: 'contador de cliques', relogio: 'relógio digital', formulario: 'formulário de contato',
     lista: 'lista de tarefas', calculadora: 'calculadora', cronometro: 'cronômetro', jogodavelha: 'jogo da velha',
@@ -368,24 +368,73 @@ ${js}
 </html>`;
   }
 
+  // Página PHP: lógica no topo + HTML com PHP misturado
+  function buildPhpPage(title, tpl, phpTpl, header) {
+    const css = (BASE_CSS + (tpl.css ? '\n' + tpl.css : '') + (phpTpl && phpTpl.css ? '\n' + phpTpl.css : '')).replace(/^/gm, '    ');
+    const logic = phpTpl ? phpTpl.logic : '';
+    const markup = phpTpl ? phpTpl.markup : tpl.markup.replace(/__TITLE__/g, '<?= htmlspecialchars($titulo) ?>');
+    const js = !phpTpl && tpl.js ? '\n  <script>\n' + tpl.js.replace(/^/gm, '    ') + '\n  <\/script>' : '';
+    return `<?php
+${header}
+// Rode com: php -S localhost:8000  e abra http://localhost:8000/
+
+$titulo = '${String(title).replace(/'/g, "\\'")}';
+${logic}
+?>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><?= htmlspecialchars($titulo) ?></title>
+  <style>
+${css}
+  </style>
+</head>
+<body>
+  ${markup}${js}
+</body>
+</html>`;
+  }
+
+  const RUN = {
+    js: (f, tpl) => tpl && tpl.program ? `node ${f}` : null,
+    py: (f) => `python ${f}`,
+    php: (f, tpl) => tpl && tpl.program && !tpl.phpWeb ? `php ${f}` : `php -S localhost:8000  (e abra http://localhost:8000/${f})`
+  };
+
   function generateCode(lang, template = 'base', name = 'meu-projeto') {
     const tpl = TEMPLATES[template] || TEMPLATES.base;
     const title = escapeHtml((name || 'meu-projeto').trim().slice(0, 60)) || 'meu-projeto';
     const file = slug(name);
     const header = (c) => `${c} ${file} — ${TEMPLATE_NAME[template]} (gerado pelo virgilio.ia)`;
     let content;
+
+    // Programas de terminal (Node, Python, PHP)
+    if (tpl.program) {
+      if (lang === 'html' || lang === 'css') lang = 'js';
+      const runCmd = RUN[lang](file + '.' + EXT[lang], tpl);
+      const how = runCmd ? `Como rodar: ${runCmd}` : '';
+      if (lang === 'php') content = `<?php\n${header('//')}\n// ${how}\n\n${tpl.php}\n`;
+      else if (lang === 'py') content = `${header('#')}\n# ${how}\n\n${tpl.py}\n`;
+      else content = `${header('//')}\n// ${how}\n\n${tpl.js}\n`;
+      return { lang, template, content, filename: file + '.' + EXT[lang], node: lang === 'js', run: runCmd, explain: tpl.explain };
+    }
+
     if (lang === 'html') content = buildHtmlPage(title, tpl);
     else if (lang === 'css') content = `/* ${file} — ${TEMPLATE_NAME[template]} (gerado pelo virgilio.ia) */\n${BASE_CSS}${tpl.css ? '\n\n' + tpl.css : ''}`;
+    else if (lang === 'php') content = buildPhpPage(title, tpl, PHP_PAGES[template], header('//'));
     else if (lang === 'py') {
       if (!tpl.py) return generateCode('html', template, name); // modelo só existe para web
       content = `${header('#')}\n\n${tpl.py.replace(/__TITLE__/g, name || 'meu-projeto')}`;
     }
     else content = `${header('//')}\n// Use junto com o HTML do mesmo modelo.\n\n${tpl.js}`;
-    return { lang, template, content, filename: (lang === 'css' ? 'style' : lang === 'js' ? 'script' : file) + '.' + EXT[lang] };
+    const filename = (lang === 'css' ? 'style' : lang === 'js' ? 'script' : lang === 'php' ? 'index' : file) + '.' + EXT[lang];
+    return { lang, template, content, filename, run: RUN[lang] ? RUN[lang](filename, tpl) : null, explain: tpl.explain };
   }
 
   function previewCode(lang, content, template = 'base') {
-    if (lang === 'py') { toast('Python roda no computador: salve o arquivo e use "python arquivo.py"'); return; }
+    if (lang === 'py' || lang === 'php' || (TEMPLATES[template] || {}).program) { toast('Esse código roda no computador: baixe o arquivo e siga o "Como rodar".'); return; }
     const tpl = TEMPLATES[template] || TEMPLATES.base;
     let html = content;
     if (lang === 'css') html = buildHtmlPage('Prévia', { ...tpl, css: '' }).replace(BASE_CSS.replace(/^/gm, '    '), content.replace(/^/gm, '    '));
@@ -398,9 +447,20 @@ ${js}
 
   /* ---------- Novos modelos ---------- */
   Object.assign(TEMPLATES, window.VIRGILIO_EXTRA_TEMPLATES || {});
+  const PHP_PAGES = window.VIRGILIO_PHP_PAGES || {};
+  Object.entries(window.VIRGILIO_PROGRAMS || {}).forEach(([key, prog]) => {
+    TEMPLATES[key] = { ...prog, program: true };
+    TEMPLATE_NAME[key] = prog.name;
+  });
 
   // Palavras que o chat usa para descobrir qual modelo você quer
   const TEMPLATE_KEYWORDS = [
+    ['adivinhacao', /adivinha|advinha|chute|numero secreto/],
+    ['senha', /gerador de senhas?|gerar senhas?|gera senhas?|senhas? fortes?|password/],
+    ['temperatura', /temperatura|celsius|fahrenheit|kelvin/],
+    ['media', /media|notas|boletim|aprovad/],
+    ['agenda', /agenda|contatos|crud/],
+    ['servidor', /servidor|backend|api rest|rest api|\bapi de\b|endpoint/],
     ['jogodavelha', /jogo da velha|velha|tic.?tac/],
     ['cronometro', /cronometro|stopwatch/],
     ['quiz', /quiz|pergunta|questionario|prova/],

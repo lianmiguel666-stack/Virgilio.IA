@@ -49,10 +49,20 @@
 
     <main class="dashboard">
       <section class="welcome-row">
-        <div>
-          <p class="eyebrow" id="dateLabel">hoje</p>
-          <h1><span id="greeting">Olá</span>, <span id="userName">Lian</span><span class="accent">.</span></h1>
-          <p class="subtitle">Vamos transformar intenção em movimento.</p>
+        <div class="welcome-main">
+          <div class="bard-wrap hero-bard" id="heroBard" title="Virgílio, o bardo"><span class="hero-tip" id="heroTip">Olá!</span></div>
+          <div>
+            <p class="eyebrow" id="dateLabel">hoje</p>
+            <h1><span id="greeting">Olá</span>, <span id="userName">Lian</span><span class="accent">.</span></h1>
+            <p class="subtitle">Vamos transformar intenção em movimento.</p>
+            <div class="hero-chips">
+              <button type="button" data-hero-send="o que você sabe do GTA 6">🎮 GTA 6</button>
+              <button type="button" data-hero-send="crie um jogo de adivinhação em python">🐍 Programa em Python</button>
+              <button type="button" data-hero-send="crie uma agenda de contatos em php">🐘 Programa em PHP</button>
+              <button type="button" data-hero-send="crie um servidor api em javascript">⚡ API em JavaScript</button>
+              <button type="button" data-hero-send="conte uma história sobre dragões">📜 História</button>
+            </div>
+          </div>
         </div>
         <button class="primary-button" id="openTaskButton" type="button"><span class="plus-icon">+</span> Nova tarefa</button>
       </section>
@@ -60,8 +70,8 @@
       <section class="update-banner" aria-label="Atualização do virgilio.ia">
         <div>
           <span class="section-kicker">Atualização</span>
-          <strong>Versão 3.0</strong>
-          <p>Conheça Virgílio, o bardo! Visual azul e extensões: músicas, histórias, notas, tradutor e moedas.</p>
+          <strong>Versão 4.0</strong>
+          <p>Virgílio agora fala de GTA 6, cria programas em JavaScript, Python e PHP, e o código vem colorido.</p>
         </div>
         <button class="ghost-button" id="updateButton" type="button">Ver novidades</button>
       </section>
@@ -134,7 +144,7 @@
           <div class="lab-view" id="codeView" data-view="code" role="tabpanel">
             <div class="tool-intro"><strong>Gerador de estrutura</strong><span>Escolha o tipo e o modelo. Ou peça no chat: "crie um jogo da velha em HTML".</span></div>
             <div class="code-tools">
-              <select id="codeType" aria-label="Tipo de arquivo"><option value="html">HTML</option><option value="css">CSS</option><option value="js">JavaScript</option><option value="py">Python</option></select>
+              <select id="codeType" aria-label="Tipo de arquivo"><option value="html">HTML</option><option value="css">CSS</option><option value="js">JavaScript</option><option value="py">Python</option><option value="php">PHP</option></select>
               <select id="codeTemplate" aria-label="Modelo"></select>
               <input id="codeName" placeholder="Nome do projeto" value="meu-projeto">
               <button class="small-button" id="generateCode" type="button">Gerar estrutura</button>
@@ -144,6 +154,7 @@
               <button class="ghost-button small" id="downloadCode" type="button">Baixar arquivo</button>
               <button class="ghost-button small" id="previewCode" type="button">Testar</button>
             </div>
+            <div class="code-head lab-code-head"><span id="codeLangBadge">Código</span></div>
             <pre class="code-output"><code id="codeOutput">// Escolha as opções acima e clique em "Gerar estrutura".</code></pre>
           </div>
           <div class="lab-view" id="imageView" data-view="image" role="tabpanel">
@@ -227,6 +238,7 @@
           <div class="assistant-header">
             <div class="assistant-title"><button class="bard-wrap assistant-bard" id="assistantBard" type="button" title="Clique no Virgílio para ouvir uma canção" aria-label="Virgílio, o bardo"></button><span class="bard-speech" id="bardSpeech"></span><div><span class="section-kicker">Seu bardo copiloto</span><h2>Virgílio</h2></div></div>
             <div class="assistant-actions">
+              <button class="icon-button small" id="expandChat" type="button" title="Chat em tela cheia">⤢</button>
               <button class="icon-button small" id="voiceButton" type="button" title="Ler respostas em voz alta">🔈</button>
               <button class="icon-button small" id="exportChat" type="button" title="Baixar conversa">↓</button>
               <button class="icon-button small" id="clearChat" type="button" title="Limpar conversa">⟲</button>
@@ -283,11 +295,14 @@
   <script src="js/mascot.js"></script>
   <script src="js/math.js"></script>
   <script src="js/templates-extra.js"></script>
+  <script src="js/templates-programs.js"></script>
   <script src="js/codegen.js"></script>
+  <script src="js/highlight.js"></script>
   <script src="js/image.js"></script>
   <script src="js/knowledge.js"></script>
   <script src="js/brain.js"></script>
   <script src="js/extensions.js"></script>
+  <script src="js/games.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

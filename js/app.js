@@ -405,8 +405,10 @@
     $('#codeTemplate').innerHTML = Object.entries(V.TEMPLATE_NAME).map(([k, name]) => `<option value="${k}">${name[0].toUpperCase() + name.slice(1)}</option>`).join('');
     $('#generateCode').addEventListener('click', () => {
       lastLabCode = V.generateCode($('#codeType').value, $('#codeTemplate').value, $('#codeName').value);
-      $('#codeOutput').textContent = lastLabCode.content;
+      $('#codeOutput').innerHTML = V.highlight(lastLabCode.content, lastLabCode.lang);
+      $('#codeLangBadge').textContent = V.LANG_NAME[lastLabCode.lang] + ' · ' + lastLabCode.filename + (lastLabCode.run ? '  →  ' + lastLabCode.run : '');
       $('#codeActions').hidden = false;
+      $('#previewCode').hidden = !(['html', 'css', 'js'].includes(lastLabCode.lang) && !lastLabCode.node);
       if (lastLabCode.lang !== $('#codeType').value) toast('Esse modelo só existe para web: gerei em HTML');
     });
     $('#copyCode').addEventListener('click', () => lastLabCode && copyText(lastLabCode.content));
@@ -493,6 +495,7 @@
     const time = timeNow();
     el.innerHTML = (role === 'ai' ? `<div class="message-avatar"><img src="${bardFace}" alt=""></div>` : '') + `<div class="bubble">${html}<time>${time}</time></div>`;
     win.appendChild(el);
+    V.highlightIn?.(el);
     win.scrollTop = win.scrollHeight;
     $$('img', el).forEach((img) => img.addEventListener('load', () => { win.scrollTop = win.scrollHeight; }, { once: true }));
     if (save) {
@@ -570,6 +573,8 @@
 
     // Botões dentro das mensagens (copiar, baixar, testar)
     $('#chatWindow').addEventListener('click', (e) => {
+      const sendBtn = e.target.closest('[data-chat-send]');
+      if (sendBtn) { sendToChat(sendBtn.dataset.chatSend); return; }
       const btn = e.target.closest('[data-chat-action]');
       if (!btn) return;
       const bubble = btn.closest('.bubble');
@@ -599,6 +604,31 @@
     const wrap = $('#assistantBard');
     if (!V.bard || !wrap) return;
     V.bard.mount(wrap, { size: 54 });
+
+    // bardo grande na saudação, com uma dica do dia
+    const hero = $('#heroBard');
+    if (hero) {
+      V.bard.mount(hero, { size: 84 });
+      const tips = ['Pergunte sobre o GTA 6!', 'Peça "jogo de adivinhação em PHP".', 'Diga "conte uma história sobre piratas".', 'Experimente "me lembre em 5 minutos de alongar".', 'Peça "agenda de contatos em python".', 'Diga "toque uma música" 🎵'];
+      $('#heroTip').textContent = V.pick(tips);
+      hero.addEventListener('click', () => $('#assistantBard').click());
+    }
+    $$('[data-hero-send]').forEach((b) => b.addEventListener('click', () => {
+      sendToChat(b.dataset.heroSend);
+      $('#chatWindow').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }));
+
+    // expandir o chat em tela cheia
+    $('#expandChat').addEventListener('click', () => {
+      const panel = $('.assistant-panel');
+      const on = panel.classList.toggle('expanded');
+      document.body.classList.toggle('chat-expanded', on);
+      $('#expandChat').textContent = on ? '✕' : '⤢';
+      $('#expandChat').title = on ? 'Sair da tela cheia' : 'Chat em tela cheia';
+      $('#chatWindow').scrollTop = $('#chatWindow').scrollHeight;
+      $('#chatInput').focus();
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('.assistant-panel').classList.contains('expanded')) $('#expandChat').click(); });
     wrap.addEventListener('click', () => {
       if (V.extensions?.isOn('musica')) {
         const title = V.bard.playSong();

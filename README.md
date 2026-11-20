@@ -13,7 +13,8 @@ Quem responde é **Virgílio, o bardo**: um mascote em pixel art que fica parado
 | 📋 Tarefas | `adicionar tarefa estudar 45 min urgente`, `terminei estudar`, `minhas tarefas`, `apague a tarefa X` |
 | 🗓️ Planejamento | `o que devo fazer primeiro?`, `organize meu dia`, `iniciar foco` |
 | ⏰ Lembretes | `me lembre em 10 minutos de beber água`, `me lembre às 18h de ligar pra mãe`, `timer de 5 minutos` |
-| 💻 Scripts | `crie um jogo da velha em HTML`, `faça um cronômetro`, `quiz em python`, depois `agora em HTML` |
+| 💻 Scripts e programas | `crie um jogo da velha em HTML`, `jogo de adivinhação em python`, `agenda de contatos em php`, `servidor api em javascript`, depois `agora em php` |
+| 🎮 GTA 6 | `o que você sabe do GTA 6`, `quando sai o gta 6`, `personagens do gta 6`, `gta 6 vai sair pra pc?` |
 | 🎨 Imagens | `gere uma imagem de pôr do sol na praia`, depois `outra` |
 | 🧮 Matemática | `quanto é 2^10`, `5! + raiz de 16`, `resolva 2x + 3 = 11`, `x² - 5x + 6 = 0`, `tabuada do 7`, `20% de 250` |
 | 📏 Conversões | `5 km em milhas`, `30 °c em fahrenheit`, `2 gb em mb`, `100 km/h em m/s` |
@@ -26,6 +27,17 @@ Quem responde é **Virgílio, o bardo**: um mascote em pixel art que fica parado
 | ⚙️ Ajustes | `modo escuro`, `ative a voz`, botão 🎤 para falar com ele |
 
 Também tem: painel de tarefas com filtros e exportação, modo foco (Pomodoro), calculadora segura (sem `eval`), conversor de unidades, gerador de código e gerador de imagens no "Laboratório".
+
+## Gerador de código
+
+Linguagens: **HTML, CSS, JavaScript, Python e PHP**, com cores no código, explicação de como funciona e o comando para rodar.
+
+| Tipo | Modelos |
+| --- | --- |
+| Páginas (HTML/CSS/JS, e PHP de verdade) | estrutura base, contador, relógio, formulário, lista de tarefas, calculadora, cronômetro, jogo da velha, quiz, landing page, modo escuro, consumo de API |
+| Programas (Node, Python, PHP) | jogo de adivinhação, gerador de senhas, conversor de temperatura, média de notas, agenda de contatos (salva em JSON), API REST de tarefas (servidor) |
+
+Os programas foram testados rodando de verdade em Node 22, Python 3 e PHP 8.
 
 ## Extensões
 
@@ -61,7 +73,10 @@ js/core.js            utilidades compartilhadas (objeto global V)
 js/mascot.js          o bardo Virgílio em pixel art, animações e melodias
 js/math.js            calculadora, equações, conversões e datas
 js/templates-extra.js modelos extras de código
-js/codegen.js         gerador de código (HTML, CSS, JS, Python)
+js/templates-programs.js programas em JS/Python/PHP e páginas PHP
+js/codegen.js         gerador de código (HTML, CSS, JS, Python, PHP)
+js/highlight.js       cores no código
+js/games.js           conhecimento sobre GTA 6
 js/image.js           gerador de imagens em canvas
 js/knowledge.js       piadas, curiosidades, Wikipedia, clima, textos, sorteios
 js/brain.js           o "cérebro" do chat: lista de habilidades
